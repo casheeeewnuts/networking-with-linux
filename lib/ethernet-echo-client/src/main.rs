@@ -1,38 +1,36 @@
-use std::env;
-use pnet::datalink::{self};
+use pnet::datalink;
 use pnet::datalink::Channel::Ethernet;
-use pnet::datalink::MacAddr;
+use pnet::datalink::{MacAddr, NetworkInterface};
 use pnet::packet::Packet;
-use pnet::packet::ethernet::{MutableEthernetPacket};
-use hex;
+use pnet::packet::ethernet::{MutableEthernetPacket, EtherType};
 
-fn main() {
-    let interface_name = env::args().nth(1).expect("target address does not provided!");
-    let raw_mac_addr = env::args().nth(2).expect("target address does not provided!");
+fn main() -> std::io::Result<()> {
+    let interface_name = std::env::args().nth(1).unwrap();
+    // let dest = {
+    //     let raw_addr = std::env::args().nth(2).unwrap();
+    // };
 
-    let interface = datalink::linux::interfaces().into_iter()
-        .filter(|iface| iface.name == interface_name)
+    let target_interface = datalink::interfaces().into_iter()
+        .filter(|iface: &NetworkInterface| iface.name == interface_name)
         .next()
         .unwrap();
 
-    let (mut tx, _) = match datalink::channel(&interface, Default::default()) {
+    let (mut tx, _) = match datalink::channel(&target_interface, Default::default()) {
         Ok(Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => panic!(),
-        Err(e) => panic!("{}", e)
+        Err(e) => panic!()
     };
 
     let mut packet = [0u8; 14];
-    let packet: MutableEthernetPacket = {
-        let mac_addr = hex::decode(raw_mac_addr).unwrap();
-        let mut ethernet_header = MutableEthernetPacket::new(&mut packet[..]).unwrap();
+    let packet = {
+        let mut packet = MutableEthernetPacket::new(&mut packet[..]).unwrap();
 
-        let dest_addr = MacAddr::new(mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-        ethernet_header.set_source(interface.mac.unwrap());
+        packet.set_destination(MacAddr::from([0x02, 0x66, 0x04, 0x0c, 0x18, 0x9b]));
+        packet.set_source(target_interface.mac.unwrap());
+        packet.set_ethertype(EtherType(0x9201));
 
-        ethernet_header.set_destination(dest_addr);
-
-        ethernet_header
+        packet
     };
 
-    tx.send_to(packet.packet(), None);
+    tx.send_to(packet.packet(), Some(target_interface)).unwrap()
 }
