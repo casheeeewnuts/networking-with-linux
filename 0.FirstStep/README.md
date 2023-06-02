@@ -41,3 +41,19 @@
 この階層構造をOSI参照モデルと呼びます。実際に広く利用されているTCP/IPモデルとは異なっているのですがプロトコルの役割を説明するのに便利なのでよく使われています。
 
 OSI参照モデルには７つの層が存在し、より上位のプロトコルが下位のプロトコルを利用する形になっています。
+
+HTTPを利用して通信を行う際の各層の働きを図にすると次のようになります。
+```mermaid
+flowchart LR
+    subgraph hostB [Host B]
+        direction BT
+        Ph2[Physics] --> D2[DataLink] --> N2[Network] --> T2[Transport] --> S2[Session] --> P2[Presentation] --> A2[Application]
+    end
+
+    subgraph hostA [Host A]
+        direction TB
+        A1[Application] --> P1[Presentation] --> S1[Session] --> T1[Transport] --> N1[Network] --> D1[DataLink] --> Ph1[Physics]
+    end
+    
+    Ph1 --> Ph2
+```

@@ -1,3 +1,5 @@
+extern crate ethernet_echo_protocol;
+
 use std::env;
 
 use pnet::datalink::{self, NetworkInterface};
