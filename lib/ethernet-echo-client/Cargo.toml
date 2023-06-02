@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 pnet = { version = "0.33.0", features = ["pnet_datalink"]}
 hex = "0.4.3"
+ethernet_echo_protocol = { path = "../ethernet_echo_protocol" }

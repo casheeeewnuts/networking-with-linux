@@ -1,5 +1,5 @@
 [package]
-name = "ethernet-echo-protocol"
+name = "ethernet_echo_protocol"
 version = "0.1.0"
 edition = "2021"
 

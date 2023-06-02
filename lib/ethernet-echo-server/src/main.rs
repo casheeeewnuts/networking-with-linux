@@ -1,8 +1,11 @@
+use std::env;
+
 use pnet::datalink::{self, NetworkInterface};
 use pnet::datalink::Channel::Ethernet;
-use pnet::packet::{Packet, MutablePacket};
-use pnet::packet::ethernet::{EtherTypes, EthernetPacket, MutableEthernetPacket};
-use std::env;
+use pnet::packet::{MutablePacket, Packet};
+use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket};
+
+use ethernet_echo_protocol::{EthernetEchoProtocolPacket, MessageTypes, MutableEthernetEchoProtocolPacket};
 
 fn main() {
     let interface_name = env::args().nth(1).expect("network interface name not provided!");
@@ -23,8 +26,6 @@ fn main() {
     loop {
         match rx.next() {
             Ok(packet) => {
-                println!("packet arrived!");
-
                 let packet = EthernetPacket::new(packet).unwrap();
 
                 if packet.get_destination() != target_interface_mac_addr {
@@ -32,21 +33,30 @@ fn main() {
                 }
 
                 println!("{} ---> {}: type={}", packet.get_source(), packet.get_destination(), packet.get_ethertype());
-                // dbg!(packet);
 
-                if packet.get_ethertype() != EtherTypes::Ipv4 {
+                let eep_packet = EthernetEchoProtocolPacket::new(packet.payload()).unwrap();
+
+                if eep_packet.get_message_type() == MessageTypes::Request {
                     tx.build_and_send(1, packet.packet().len(),
-                                      &mut |new_packet| {
-                                          let mut new_packet = MutableEthernetPacket::new(new_packet).unwrap();
+                                      &mut |raw_packet| {
+                                          let mut new_packet = MutableEthernetPacket::new(raw_packet).unwrap();
+                                          let mut buf = [0u8; 4];
+                                          let eep_packet = {
+                                              let mut eep_packet = MutableEthernetEchoProtocolPacket::new(&mut buf).unwrap();
+                                              eep_packet.set_message_type(MessageTypes::Response);
+
+                                              eep_packet
+                                          };
 
                                           new_packet.clone_from(&packet);
 
                                           new_packet.set_source(packet.get_destination());
                                           new_packet.set_destination(packet.get_source());
-                                      }
+                                          new_packet.set_payload(eep_packet.packet());
+                                      },
                     );
                 }
-            },
+            }
             Err(e) => {
                 panic!("{}", e);
             }

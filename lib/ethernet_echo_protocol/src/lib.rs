@@ -1,7 +1,6 @@
 use pnet::packet::PrimitiveValues;
 use pnet_macros::{packet};
 use pnet_macros;
-use pnet_macros_support::packet::Packet;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MessageType(pub u8);
@@ -21,10 +20,10 @@ pub mod MessageTypes {
 /// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 /// | message_type |                     padding                  |
 /// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-/// |                           payload                           |
-/// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 /// |                                                             |
-/// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+/// +                                                             +
+/// |                   payload (0 ~ 1496 bytes)                  |
+/// +                                                             +
 /// |                                                             |
 /// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #[packet]
@@ -56,13 +55,9 @@ impl PrimitiveValues for MessageType {
 
 #[test]
 fn ethernet_echo_protocol_packet_header_test() {
-    let mut packet = [0u8; 4 + 6];
-    let mut eep_packet = MutableEthernetEchoProtocolPacket::new(&mut packet[..]).unwrap();
+    let mut header = [0u8; 4 + 1500];
+    let mut eep_packet = MutableEthernetEchoProtocolPacket::new(&mut header[..]).unwrap();
 
     eep_packet.set_message_type(MessageTypes::Response);
     assert_eq!(eep_packet.get_message_type(), MessageTypes::Response);
-
-    eep_packet.set_payload("hello!".as_bytes());
-    dbg!(std::string::String::from_utf8(eep_packet.payload().to_vec()).unwrap());
-    dbg!(packet);
 }
