@@ -8,12 +8,12 @@ fn main() {
     let interface_name = env::args().nth(1).expect("network interface name not provided!");
 
     let interfaces = datalink::interfaces();
-    let target_interface = interfaces.iter()
-        .filter(|iface: &&NetworkInterface| iface.name == interface_name)
+    let target_interface = interfaces.into_iter()
+        .filter(|iface: &NetworkInterface| iface.name == interface_name)
         .next()
         .unwrap();
 
-    let (mut tx, mut rx) = match datalink::channel(target_interface, Default::default()) {
+    let (mut tx, mut rx) = match datalink::channel(&target_interface, Default::default()) {
         Ok(Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => panic!(),
         Err(e) => panic!("{}", e)
@@ -22,6 +22,8 @@ fn main() {
     loop {
         match rx.next() {
             Ok(packet) => {
+                println!("packet arrived!");
+
                 let packet = EthernetPacket::new(packet).unwrap();
 
                 tx.build_and_send(1, packet.packet().len(),
