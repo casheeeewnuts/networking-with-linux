@@ -39,6 +39,8 @@ fn main() {
                 let eep_packet = EthernetEchoProtocolPacket::new(packet.payload()).unwrap();
 
                 if eep_packet.get_message_type() == MessageTypes::Request {
+                    let message = std::str::from_utf8(eep_packet.payload()).unwrap();
+                    println!("message received \"{}\" via {}", message, packet.get_source());
                     tx.build_and_send(1, packet.packet().len(),
                                       &mut |raw_packet| {
                                           let mut new_packet = MutableEthernetPacket::new(raw_packet).unwrap();
