@@ -14,6 +14,8 @@ WORKDIR /sandbox
 ENV DEPS \
         dnsutils \
         iproute2 \
+        iputils-ping \
+        tcpdump \
         curl
 
 RUN apt update -y; \
