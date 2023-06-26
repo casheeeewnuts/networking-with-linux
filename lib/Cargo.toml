@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "ethernet-echo-client",
     "ethernet_echo_protocol",
-    "ethernet-echo-server",
+    "ethernet_echo_client",
+    "ethernet_echo_server",
 ]
